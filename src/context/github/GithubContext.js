@@ -9,6 +9,7 @@ export const GithubProvider = ({ children }) => {
   const initalState = {
     users: [],
     user: {},
+    repos: [],
     loading: false,
   };
 
@@ -58,18 +59,37 @@ export const GithubProvider = ({ children }) => {
       },
     });
 
-    console.log(response.status);
-
-    if (response.status === 200) {
+    if (response.status === 404) {
       window.location = "/notfound";
     } else {
-      const { data } = await response.json();
-      console.log(data);
+      const data = await response.json();
+      // console.log(data);
       dispatch({
         type: "GET_USER",
         payload: data,
       });
     }
+  };
+
+  // Get Repos
+  const getUserRepos = async (login) => {
+    const params = new URLSearchParams({
+      sort: "created",
+      per_page: 10,
+    });
+
+    setLoading();
+    let response = await fetch(`${GITHUB_URL}users/${login}/repos?${params}`, {
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+      },
+    });
+    const data = await response.json();
+
+    dispatch({
+      type: "GET_REPOS",
+      payload: data,
+    });
   };
 
   const setLoading = () => {
@@ -90,10 +110,12 @@ export const GithubProvider = ({ children }) => {
         users: state.users,
         loading: state.loading,
         user: state.user,
+        repos: state.repos,
         // fetchUsers,
         searchUsers,
         clearUsers,
         getUser,
+        getUserRepos,
       }}
     >
       {children}
